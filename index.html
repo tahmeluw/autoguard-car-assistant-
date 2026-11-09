@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoGuard - Smart Car Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">🛡️</span>
+                <span class="logo-text">AutoGuard</span>
+            </div>
+            <nav class="nav-links">
+                <button class="nav-btn active" data-tab="search">Search Listings</button>
+                <button class="nav-btn" data-tab="scan">AI Inspection</button>
+                <button class="nav-btn" data-tab="garage">My Garage & Maintenance</button>
+            </nav>
+            <div class="user-profile">
+                <span class="avatar">👩‍👧</span>
+                <span class="user-name">Mom's Car Assistant</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <!-- Section 1: Used/New Car Search -->
+        <section id="search-section" class="tab-content active">
+            <div class="section-header">
+                <h2>Find a Fair & Reliable Car</h2>
+                <p>Search market listings with instant fair-price ratings and inspection history scoring.</p>
+            </div>
+
+            <div class="search-bar-card">
+                <div class="filter-group">
+                    <input type="text" id="search-input" placeholder="Search make, model, or year (e.g. Honda Civic)...">
+                    <select id="condition-filter">
+                        <option value="all">All Conditions</option>
+                        <option value="used">Used Cars Only</option>
+                        <option value="new">New Cars Only</option>
+                    </select>
+                    <select id="price-filter">
+                        <option value="all">Any Price</option>
+                        <option value="15000">Under $15,000</option>
+                        <option value="25000">Under $25,000</option>
+                    </select>
+                    <button class="btn btn-primary" id="search-btn">Search</button>
+                </div>
+            </div>
+
+            <div class="listings-grid" id="listings-grid">
+                <!-- Injected by JavaScript -->
+            </div>
+        </section>
+
+        <!-- Section 2: Visual Inspection & Scanner -->
+        <section id="scan-section" class="tab-content">
+            <div class="section-header">
+                <h2>Visual Inspection Tool</h2>
+                <p>Snap or upload photos of key vehicle areas to check for hidden damage, rust, or wear.</p>
+            </div>
+
+            <div class="inspection-container">
+                <div class="camera-card">
+                    <h3>Upload Inspection Photo</h3>
+                    <div class="drop-zone" id="drop-zone">
+                        <div class="drop-zone-prompt">
+                            <span class="upload-icon">📷</span>
+                            <p>Drag & drop a photo or <strong>Click to Browse</strong></p>
+                            <small>Supports photos of Engine Bay, Tires, Fender, Underbody</small>
+                        </div>
+                        <input type="file" id="file-input" accept="image/*" class="file-input">
+                    </div>
+                    
+                    <div class="zone-selector">
+                        <label for="car-part">Vehicle Area:</label>
+                        <select id="car-part">
+                            <option value="underbody">Under the Hood / Engine</option>
+                            <option value="tires">Tires & Tread</option>
+                            <option value="fender">Rear Fender / Body</option>
+                            <option value="undercarriage">Undercarriage Rust</option>
+                        </select>
+                    </div>
+
+                    <button class="btn btn-accent btn-block" id="analyze-btn" disabled>Analyze Photo</button>
+                </div>
+
+                <div class="analysis-result-card" id="analysis-result-card">
+                    <h3>AI Diagnosis & Fair Value Impact</h3>
+                    <div class="result-placeholder" id="result-placeholder">
+                        <p>Upload a photo to view automatic wear detection, maintenance urgency, and price adjustment recommendations.</p>
+                    </div>
+                    <div class="result-content hidden" id="result-content">
+                        <!-- Dynamic JS content -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: My Garage & Predictive Maintenance -->
+        <section id="garage-section" class="tab-content">
+            <div class="section-header">
+                <h2>Predictive Maintenance Tracker</h2>
+                <p>Keep your car reliable with automated mileage-based service predictions.</p>
+            </div>
+
+            <div class="vehicle-summary-card">
+                <div class="vehicle-info">
+                    <span class="car-badge">Active Vehicle</span>
+                    <h3>2018 Toyota RAV4 XLE</h3>
+                    <p>Current Odometer: <strong>64,200 miles</strong> | Daily Average: <strong>28 mi/day</strong></p>
+                </div>
+                <div class="health-score">
+                    <div class="score-circle">
+                        <span class="score">88%</span>
+                    </div>
+                    <span>Vehicle Health</span>
+                </div>
+            </div>
+
+            <div class="maintenance-timeline">
+                <h3>Upcoming Maintenance Predictions</h3>
+                <div class="timeline-list" id="timeline-list">
+                    <!-- Dynamic timeline items -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
