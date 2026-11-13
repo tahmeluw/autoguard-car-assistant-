@@ -2,7 +2,7 @@
 // 1. SUPABASE CLIENT INITIALIZATION
 // ==========================================
 const SUPABASE_URL = 'https://msyzuknuqggaokgqegps.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_secret_z7UeQ0j76CpP5niulSJI0g_2NmJwUSE';
+const SUPABASE_ANON_KEY = 'sb_publishable_Q_738gj6P4EA7X6Q4pDBaw_Oi3ZT2KG';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==========================================
@@ -12,7 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initNavigation();
     initSearchFilters();
     fetchAndRenderListings();        // Fetches car listings from Supabase
-    initPhotoUpload();               // Sets up AI inspection photo upload & logging
+    initPhotoUpload();               // Sets up AI inspection photo upload, storage, & logging
     fetchAndRenderMaintenance();     // Fetches predictive maintenance timeline
 });
 
@@ -93,7 +93,7 @@ async function fetchAndRenderListings(searchText = "", condition = "all", maxPri
 }
 
 // ==========================================
-// 5. AI PHOTO INSPECTION UPLOAD & LOGGING
+// 5. AI PHOTO INSPECTION UPLOAD & CLOUD STORAGE
 // ==========================================
 function initPhotoUpload() {
     const dropZone = document.getElementById("drop-zone");
@@ -116,6 +116,7 @@ function initPhotoUpload() {
         const part = document.getElementById("car-part").value;
         resultPlaceholder.classList.add("hidden");
         resultContent.classList.remove("hidden");
+        resultContent.innerHTML = `<p>Uploading image and running AI diagnosis...</p>`;
 
         let assessment = "";
         if (part === "underbody") {
@@ -143,8 +144,30 @@ function initPhotoUpload() {
             `;
         }
 
-        // Save Inspection Record into Supabase
-        const { error } = await db
+        let publicImageUrl = "";
+        
+        if (uploadedFile) {
+            const fileName = `${Date.now()}_${uploadedFile.name}`;
+            
+            // Upload file to Supabase Storage bucket 'inspection-photos'
+            const { data: storageData, error: storageError } = await db.storage
+                .from("inspection-photos")
+                .upload(fileName, uploadedFile);
+
+            if (!storageError) {
+                // Get public URL for the uploaded photo
+                const { data: urlData } = db.storage
+                    .from("inspection-photos")
+                    .getPublicUrl(fileName);
+                
+                publicImageUrl = urlData.publicUrl;
+            } else {
+                console.warn("Storage upload failed, logging assessment without image URL:", storageError.message);
+            }
+        }
+
+        // Save Inspection Record into Supabase Database Table
+        const { error: dbError } = await db
             .from("inspection_logs")
             .insert([{
                 car_part: part,
@@ -152,8 +175,8 @@ function initPhotoUpload() {
                 assessment_html: assessment
             }]);
 
-        if (error) {
-            console.error("Failed to log inspection to Supabase:", error.message);
+        if (dbError) {
+            console.error("Failed to log inspection to Supabase:", dbError.message);
         } else {
             assessment += `<p style="margin-top:0.75rem; font-size:0.85rem; color:gray;">✓ Saved to AutoGuard Cloud History</p>`;
         }
