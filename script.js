@@ -1,77 +1,24 @@
-// Initialize Supabase Client
-const SUPABASE_URL = 'https://YOUR_PROJECT_REF.supabase.co';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// ==========================================
+// 1. SUPABASE CLIENT INITIALIZATION
+// ==========================================
+const SUPABASE_URL = 'https://msyzuknuqggaokgqegps.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_secret_z7UeQ0j76CpP5niulSJI0g_2NmJwUSE';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-// Mock Car Data
-const carListings = [
-    {
-        id: 1,
-        title: "2019 Honda Civic LX",
-        price: 16500,
-        mileage: "42,000 miles",
-        type: "used",
-        fairPriceRating: "Great Deal ($800 below market)",
-        ratingClass: "badge-fair",
-        img: "https://images.unsplash.com/photo-1590362891991-f776e747a588?w=500&q=80"
-    },
-    {
-        id: 2,
-        title: "2017 Toyota Corolla LE",
-        price: 14200,
-        mileage: "58,500 miles",
-        type: "used",
-        fairPriceRating: "Fair Market Value",
-        ratingClass: "badge-fair",
-        img: "https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=500&q=80"
-    },
-    {
-        id: 3,
-        title: "2021 Ford Escape SE",
-        price: 21000,
-        mileage: "29,000 miles",
-        type: "used",
-        fairPriceRating: "Overpriced by ~$1,200",
-        ratingClass: "badge-warning",
-        img: "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?w=500&q=80"
-    }
-];
-
-// Predictive Maintenance Data
-const maintenanceItems = [
-    {
-        title: "Synthetic Oil Change & Filter",
-        dueMileage: "65,000 miles",
-        dueTime: "In ~3 weeks (approx. 800 miles left)",
-        status: "urgent",
-        estCost: "$65 - $85"
-    },
-    {
-        title: "Front Brake Pads Inspection / Replacement",
-        dueMileage: "70,000 miles",
-        dueTime: "In ~5 months",
-        status: "normal",
-        estCost: "$180 - $240"
-    },
-    {
-        title: "Tire Rotation & Alignment Check",
-        dueMileage: "72,000 miles",
-        dueTime: "In ~7 months",
-        status: "normal",
-        estCost: "$50 - $90"
-    }
-];
-
-// DOM Load Initialization
+// ==========================================
+// 2. DOM LOAD INITIALIZATION
+// ==========================================
 document.addEventListener("DOMContentLoaded", () => {
     initNavigation();
-    renderListings(carListings);
-    initPhotoUpload();
-    renderMaintenance();
+    initSearchFilters();
+    fetchAndRenderListings();        // Fetches car listings from Supabase
+    initPhotoUpload();               // Sets up AI inspection photo upload & logging
+    fetchAndRenderMaintenance();     // Fetches predictive maintenance timeline
 });
 
-// Tab Navigation Logic
+// ==========================================
+// 3. TAB NAVIGATION LOGIC
+// ==========================================
 function initNavigation() {
     const navButtons = document.querySelectorAll(".nav-btn");
     const tabContents = document.querySelectorAll(".tab-content");
@@ -89,20 +36,54 @@ function initNavigation() {
     });
 }
 
-// Render Listings
-function renderListings(listings) {
-    const grid = document.getElementById("listings-grid");
-    grid.innerHTML = "";
+// ==========================================
+// 4. SEARCH & FILTER HANDLERS
+// ==========================================
+function initSearchFilters() {
+    const searchBtn = document.getElementById("search-btn");
+    searchBtn.addEventListener("click", () => {
+        const searchText = document.getElementById("search-input").value.trim();
+        const condition = document.getElementById("condition-filter").value;
+        const maxPrice = document.getElementById("price-filter").value;
+        fetchAndRenderListings(searchText, condition, maxPrice);
+    });
+}
 
+// Fetch & Render Listings from Supabase
+async function fetchAndRenderListings(searchText = "", condition = "all", maxPrice = "all") {
+    const grid = document.getElementById("listings-grid");
+    grid.innerHTML = "<p>Loading vehicles...</p>";
+
+    let query = db.from("car_listings").select("*");
+
+    if (searchText) {
+        query = query.ilike("title", `%${searchText}%`);
+    }
+    if (condition !== "all") {
+        query = query.eq("type", condition);
+    }
+    if (maxPrice !== "all") {
+        query = query.lte("price", parseInt(maxPrice));
+    }
+
+    const { data: listings, error } = await query;
+
+    if (error) {
+        console.error("Error fetching car listings:", error.message);
+        grid.innerHTML = `<p style="color:red;">Error loading listings from database.</p>`;
+        return;
+    }
+
+    grid.innerHTML = "";
     listings.forEach(car => {
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
             <img src="${car.img}" alt="${car.title}" class="card-img">
             <div class="card-body">
-                <span class="badge ${car.ratingClass}">${car.fairPriceRating}</span>
+                <span class="badge ${car.rating_class}">${car.fair_price_rating}</span>
                 <h3>${car.title}</h3>
-                <p class="price-tag">$${car.price.toLocaleString()}</p>
+                <p class="price-tag">$${Number(car.price).toLocaleString()}</p>
                 <p><small>Mileage: ${car.mileage}</small></p>
                 <button class="btn btn-primary" style="margin-top:0.5rem;" onclick="alert('Viewing full inspection history report for ${car.title}')">View Inspection History</button>
             </div>
@@ -111,7 +92,9 @@ function renderListings(listings) {
     });
 }
 
-// Photo Analysis Handling
+// ==========================================
+// 5. AI PHOTO INSPECTION UPLOAD & LOGGING
+// ==========================================
 function initPhotoUpload() {
     const dropZone = document.getElementById("drop-zone");
     const fileInput = document.getElementById("file-input");
@@ -129,7 +112,7 @@ function initPhotoUpload() {
         }
     });
 
-    analyzeBtn.addEventListener("click", () => {
+    analyzeBtn.addEventListener("click", async () => {
         const part = document.getElementById("car-part").value;
         resultPlaceholder.classList.add("hidden");
         resultContent.classList.remove("hidden");
@@ -160,29 +143,74 @@ function initPhotoUpload() {
             `;
         }
 
+        // Save Inspection Record into Supabase
+        const { error } = await db
+            .from("inspection_logs")
+            .insert([{
+                car_part: part,
+                file_name: uploadedFile ? uploadedFile.name : "unknown.jpg",
+                assessment_html: assessment
+            }]);
+
+        if (error) {
+            console.error("Failed to log inspection to Supabase:", error.message);
+        } else {
+            assessment += `<p style="margin-top:0.75rem; font-size:0.85rem; color:gray;">✓ Saved to AutoGuard Cloud History</p>`;
+        }
+
         resultContent.innerHTML = assessment;
     });
 }
 
-// Render Predictive Maintenance
-function renderMaintenance() {
+// ==========================================
+// 6. PREDICTIVE MAINTENANCE GARAGE TIMELINE
+// ==========================================
+async function fetchAndRenderMaintenance() {
     const list = document.getElementById("timeline-list");
-    list.innerHTML = "";
+    list.innerHTML = "<p>Loading maintenance predictions...</p>";
 
+    const { data: maintenanceItems, error } = await db
+        .from("maintenance_items")
+        .select("*")
+        .order("id", { ascending: true });
+
+    if (error) {
+        console.error("Error fetching maintenance items:", error.message);
+        list.innerHTML = `<p style="color:red;">Error loading maintenance schedule.</p>`;
+        return;
+    }
+
+    list.innerHTML = "";
     maintenanceItems.forEach(item => {
         const el = document.createElement("div");
         el.className = `timeline-item ${item.status === 'urgent' ? 'urgent' : ''}`;
         el.innerHTML = `
             <div>
                 <h4>${item.title}</h4>
-                <p><small>Due at: ${item.dueMileage} (${item.dueTime})</small></p>
+                <p><small>Due at: ${item.due_mileage} (${item.due_time})</small></p>
             </div>
             <div style="text-align:right;">
-                <span style="font-weight:600; color:var(--text-dark);">${item.estCost}</span>
+                <span style="font-weight:600; color:var(--text-dark);">${item.est_cost}</span>
                 <br>
-                <button class="btn btn-accent" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-top:0.3rem;" onclick="alert('Service scheduled!')">Schedule</button>
+                <button class="btn btn-accent" style="padding:0.3rem 0.6rem; font-size:0.8rem; margin-top:0.3rem;" onclick="scheduleMaintenance(${item.id}, '${item.title}')">Schedule</button>
             </div>
         `;
         list.appendChild(el);
     });
+}
+
+// Update Maintenance Status in Supabase when "Schedule" is clicked
+async function scheduleMaintenance(itemId, title) {
+    const { error } = await db
+        .from("maintenance_items")
+        .update({ status: "scheduled", due_time: "Service Appointment Booked" })
+        .eq("id", itemId);
+
+    if (error) {
+        alert("Could not schedule service: " + error.message);
+        return;
+    }
+
+    alert(`Service scheduled for: ${title}`);
+    fetchAndRenderMaintenance(); // Refresh UI immediately
 }
