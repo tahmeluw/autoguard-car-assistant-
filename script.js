@@ -2,7 +2,7 @@
 // 1. SUPABASE CLIENT INITIALIZATION
 // ==========================================
 const SUPABASE_URL = 'https://msyzuknuqggaokgqegps.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_secret_DfiWEG0mRaYplGwz9lp38A_wpz8GqRA';
+const SUPABASE_ANON_KEY = 'sb_publishable_Q_738gj6P4EA7X6Q4pDBaw_Oi3ZT2KG';
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==========================================
